@@ -1,11 +1,27 @@
 require "nvchad.mappings"
 
+-- Load which-key descriptions
+vim.schedule(function()
+  require("configs.whichkey").setup()
+end)
+
 -- add yours here
 
 local map = vim.keymap.set
 
 map("n", ";", ":", { desc = "CMD enter command mode" })
 map("i", "jk", "<ESC>")
+
+-- Fix NvChad keymap conflicts
+vim.keymap.del("n", "<leader>n") -- Remove line number toggle to allow NPM group
+vim.keymap.del("n", "<leader>x") -- Remove buffer close to allow diagnostics group
+
+-- Remap conflicting NvChad keybindings
+map("n", "<leader>tn", "<cmd>set nu!<CR>", { desc = "Toggle line numbers" })
+map("n", "<leader>tr", "<cmd>set rnu!<CR>", { desc = "Toggle relative numbers" })
+map("n", "<leader>bd", function()
+  require("nvchad.tabufline").close_buffer()
+end, { desc = "Close buffer" })
 
 -- JavaScript/TypeScript specific mappings
 map("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "LSP code action" })
@@ -14,15 +30,32 @@ map("n", "gd", vim.lsp.buf.definition, { desc = "LSP goto definition" })
 map("n", "gr", vim.lsp.buf.references, { desc = "LSP references" })
 map("n", "K", vim.lsp.buf.hover, { desc = "LSP hover" })
 
+-- Organize imports for TypeScript/JavaScript
+map("n", "<leader>co", function()
+  vim.lsp.buf.code_action {
+    apply = true,
+    context = {
+      only = { "source.organizeImports" },
+      diagnostics = {},
+    },
+  }
+end, { desc = "Organize imports" })
+
+-- Copilot commands
+map("n", "<leader>cpe", "<cmd>Copilot enable<CR>", { desc = "Enable Copilot" })
+map("n", "<leader>cpd", "<cmd>Copilot disable<CR>", { desc = "Disable Copilot" })
+map("n", "<leader>cpp", "<cmd>Copilot panel<CR>", { desc = "Copilot panel" })
+map("n", "<leader>cps", "<cmd>Copilot status<CR>", { desc = "Copilot status" })
+
 -- Format on save is enabled by default via conform
 -- Manual format with <leader>fm
 map("n", "<leader>fm", function()
   require("conform").format { lsp_fallback = true }
 end, { desc = "Format file" })
 
--- Console.log shortcuts for JavaScript
-map("n", "<leader>cl", "oconsole.log()<Esc>hi", { desc = "Insert console.log" })
-map("v", "<leader>cl", "yoconsole.log('<C-r>\":', <C-r>\");<Esc>", { desc = "Log selected variable" })
+-- Console.log shortcuts for JavaScript (using cL to avoid conflict with Trouble's cl)
+map("n", "<leader>cL", "oconsole.log()<Esc>hi", { desc = "Insert console.log" })
+map("v", "<leader>cL", "yoconsole.log('<C-r>\":', <C-r>\");<Esc>", { desc = "Log selected variable" })
 
 -- Better window navigation
 map("n", "<C-h>", "<C-w>h", { desc = "Move to left window" })
